@@ -1,0 +1,4 @@
+server/credentials.json
+.env
+credentials.json
+*.key
