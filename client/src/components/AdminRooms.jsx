@@ -69,8 +69,8 @@ const AdminRooms = () => {
         }
 
         try {
-            await axios.post('http://localhost:5000/api/admin/rooms', data, {
-                headers: { 
+            await axios.post('https://github.com/AhireShubham0001/Daulat-Resortadmin/rooms', data, {
+                headers: {
                     'Content-Type': 'multipart/form-data',
                     Authorization: `Bearer ${localStorage.getItem('token')}`
                 },
@@ -159,8 +159,8 @@ const AdminRooms = () => {
         }
 
         try {
-            const res = await axios.put(`http://localhost:5000/api/admin/rooms/${editRoom._id}`, data, {
-                headers: { 
+            const res = await axios.put(`https://github.com/AhireShubham0001/Daulat-Resortadmin/rooms/${editRoom._id}`, data, {
+                headers: {
                     'Content-Type': 'multipart/form-data',
                     Authorization: `Bearer ${localStorage.getItem('token')}`
                 },
@@ -378,21 +378,19 @@ const AdminRooms = () => {
                                                     <img
                                                         src={img}
                                                         alt={`Room ${i + 1}`}
-                                                        className={`w-full h-full object-cover rounded-lg border-2 transition-all ${
-                                                            isDeleted
+                                                        className={`w-full h-full object-cover rounded-lg border-2 transition-all ${isDeleted
                                                                 ? 'opacity-30 border-red-400 grayscale'
                                                                 : 'border-transparent'
-                                                        }`}
+                                                            }`}
                                                     />
                                                     {/* Delete / Undo button – top-right corner */}
                                                     <button
                                                         type="button"
                                                         onClick={() => handleDeleteImage(img)}
-                                                        className={`absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold shadow transition-all ${
-                                                            isDeleted
+                                                        className={`absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold shadow transition-all ${isDeleted
                                                                 ? 'bg-gray-400 hover:bg-gray-500'
                                                                 : 'bg-red-500 hover:bg-red-600'
-                                                        }`}
+                                                            }`}
                                                         title={isDeleted ? 'Undo remove' : 'Remove image'}
                                                     >
                                                         {isDeleted ? '↩' : '×'}
