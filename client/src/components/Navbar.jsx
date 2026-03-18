@@ -33,6 +33,7 @@ export default function Navbar() {
                     <Link to="/facilities" className="hover:text-resort-gold transition-colors duration-300">Facilities</Link>
                     <Link to="/gallery" className="hover:text-resort-gold transition-colors duration-300">Gallery</Link>
                     <Link to="/contact" className="hover:text-resort-gold transition-colors duration-300">Contact</Link>
+                    <Link to="/login" className="hover:text-resort-gold transition-colors duration-300 font-semibold border-b-2 border-transparent hover:border-resort-gold">Login</Link>
                     <Link to="/booking" className="px-6 py-2 bg-resort-gold text-white rounded-full hover:bg-resort-gold-dark transition shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
                         Book Now
                     </Link>
@@ -62,6 +63,7 @@ export default function Navbar() {
                             <Link to="/facilities" onClick={() => setIsOpen(false)} className="text-lg font-medium text-gray-700 hover:text-resort-gold">Facilities</Link>
                             <Link to="/gallery" onClick={() => setIsOpen(false)} className="text-lg font-medium text-gray-700 hover:text-resort-gold">Gallery</Link>
                             <Link to="/contact" onClick={() => setIsOpen(false)} className="text-lg font-medium text-gray-700 hover:text-resort-gold">Contact</Link>
+                            <Link to="/login" onClick={() => setIsOpen(false)} className="text-lg font-medium text-resort-gold hover:text-resort-dark">Login</Link>
                             <Link to="/booking" onClick={() => setIsOpen(false)} className="w-full bg-resort-gold text-white py-3 rounded-lg font-bold shadow-md">Book Now</Link>
                         </div>
                     </motion.div>
