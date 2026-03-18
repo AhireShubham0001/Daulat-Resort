@@ -167,38 +167,42 @@ app.post('/api/bookings', async (req, res) => {
 
         await newBooking.save();
 
-        // Send Confirmation Email
-        try {
-            const transporter = nodemailer.createTransport({
-                service: 'gmail',
-                auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
-            });
+        // Send Confirmation Email in background so the user doesn't wait
+        const sendBookingEmail = async () => {
+            try {
+                const transporter = nodemailer.createTransport({
+                    service: 'gmail',
+                    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
+                });
 
-            await transporter.sendMail({
-                from: process.env.EMAIL_USER,
-                to: email,
-                subject: 'Daulat Resort - Reservation Confirmed',
-                html: `
-                    <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
-                        <h2 style="color: #c5a059; text-align: center;">Reservation Confirmed!</h2>
-                        <p>Dear <strong>${guestName}</strong>,</p>
-                        <p>Thank you for choosing Daulat Resort. Your reservation has been successfully confirmed.</p>
-                        <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                            <p style="margin: 0;"><strong>Room:</strong> ${room.name}</p>
-                            <p style="margin: 5px 0 0;"><strong>Dates:</strong> ${new Date(startDate).toLocaleDateString()} - ${new Date(endDate).toLocaleDateString()}</p>
-                            <p style="margin: 5px 0 0;"><strong>Total Price:</strong> ₹${totalPrice}</p>
+                await transporter.sendMail({
+                    from: process.env.EMAIL_USER,
+                    to: email,
+                    subject: 'Daulat Resort - Reservation Confirmed',
+                    html: `
+                        <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
+                            <h2 style="color: #c5a059; text-align: center;">Reservation Confirmed!</h2>
+                            <p>Dear <strong>${guestName}</strong>,</p>
+                            <p>Thank you for choosing Daulat Resort. Your reservation has been successfully confirmed.</p>
+                            <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                                <p style="margin: 0;"><strong>Room:</strong> ${room.name}</p>
+                                <p style="margin: 5px 0 0;"><strong>Dates:</strong> ${new Date(startDate).toLocaleDateString()} - ${new Date(endDate).toLocaleDateString()}</p>
+                                <p style="margin: 5px 0 0;"><strong>Total Price:</strong> ₹${totalPrice}</p>
+                            </div>
+                            <p>Our staff will contact you shortly to verify your details.</p>
+                            <p style="text-align: center; color: #777; font-size: 12px; margin-top: 30px;">
+                                Daulat Resort - Looking Forward to Your Visit
+                            </p>
                         </div>
-                        <p>Our staff will contact you shortly to verify your details.</p>
-                        <p style="text-align: center; color: #777; font-size: 12px; margin-top: 30px;">
-                            Daulat Resort - Looking Forward to Your Visit
-                        </p>
-                    </div>
-                `
-            });
-            console.log(`Confirmation email sent to: ${email}`);
-        } catch (emailErr) {
-            console.error("Confirmation Email Error:", emailErr);
-        }
+                    `
+                });
+                console.log(`Confirmation email sent to: ${email}`);
+            } catch (emailErr) {
+                console.error("Confirmation Email Error:", emailErr);
+            }
+        };
+        
+        sendBookingEmail(); // Fire and forget! Doesn't block the response.
 
         res.status(201).json(newBooking);
     } catch (err) {
@@ -251,32 +255,35 @@ app.post('/api/login', async (req, res) => {
 
                 await User.findByIdAndUpdate(user._id, { otp, otpExpires });
 
-                // Send OTP via Email
-                try {
-                const transporter = nodemailer.createTransport({
-                    service: 'gmail',
-                    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
-                });
+                // Send OTP via Email in background so the user doesn't wait
+                const sendOTP = async () => {
+                    try {
+                        const transporter = nodemailer.createTransport({
+                            service: 'gmail',
+                            auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
+                        });
 
-                await transporter.sendMail({
-                    from: process.env.EMAIL_USER,
-                    to: user.email,
-                    subject: 'Daulat Resort - 2-Step Verification Code',
-                    html: `
-                        <div style="font-family: sans-serif; text-align: center; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-                            <h2 style="color: #c5a059;">Your Safety Code</h2>
-                            <p>Please use the following 6-digit code to complete your login to the Admin Panel.</p>
-                            <h1 style="background: #f4f4f4; padding: 10px; display: inline-block; letter-spacing: 5px; color: #333;">${otp}</h1>
-                            <p style="color: #777; font-size: 12px;">This code will expire in 10 minutes.</p>
-                        </div>
-                    `
-                });
+                        await transporter.sendMail({
+                            from: process.env.EMAIL_USER,
+                            to: user.email,
+                            subject: 'Daulat Resort - 2-Step Verification Code',
+                            html: `
+                                <div style="font-family: sans-serif; text-align: center; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+                                    <h2 style="color: #c5a059;">Your Safety Code</h2>
+                                    <p>Please use the following 6-digit code to complete your login to the Admin Panel.</p>
+                                    <h1 style="background: #f4f4f4; padding: 10px; display: inline-block; letter-spacing: 5px; color: #333;">${otp}</h1>
+                                    <p style="color: #777; font-size: 12px;">This code will expire in 10 minutes.</p>
+                                </div>
+                            `
+                        });
+                    } catch (err) {
+                        console.error("OTP Email Error:", err);
+                    }
+                };
+                
+                sendOTP(); // Fire and forget! Doesn't block the response.
 
                 return res.json({ twoFactor: true, message: "Verification code sent to your email." });
-            } catch (err) {
-                console.error("OTP Email Error:", err);
-                return res.status(500).json({ message: "Failed to send verification code. Check email settings." });
-            }
         }
     }
 
