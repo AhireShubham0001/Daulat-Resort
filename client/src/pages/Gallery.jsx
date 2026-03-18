@@ -135,7 +135,7 @@ export default function Gallery() {
     const [lightboxIndex, setLightboxIndex] = useState(null);
 
     useEffect(() => {
-        axios.get('https://github.com/AhireShubham0001/Daulat-Resortgallery')
+        axios.get('https://daulat-resort.onrender.com/gallery')
             .then(res => {
                 setImages(res.data);
             })
@@ -220,8 +220,8 @@ export default function Gallery() {
                             key={cat}
                             onClick={() => setFilter(cat)}
                             className={`px-5 py-2 rounded-full text-sm font-semibold uppercase tracking-wider transition-all duration-300 border ${filter === cat
-                                    ? 'bg-resort-dark text-white border-resort-dark shadow-lg scale-105'
-                                    : 'bg-white text-gray-500 border-gray-200 hover:border-resort-gold hover:text-resort-gold'
+                                ? 'bg-resort-dark text-white border-resort-dark shadow-lg scale-105'
+                                : 'bg-white text-gray-500 border-gray-200 hover:border-resort-gold hover:text-resort-gold'
                                 }`}
                         >
                             {cat}
