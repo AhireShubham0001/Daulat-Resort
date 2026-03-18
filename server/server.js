@@ -86,6 +86,11 @@ const User = mongoose.models.User || mongoose.model('User', UserSchema);
 app.use('/api/admin', authMiddleware, adminRoutes);
 
 // --- PUBLIC ROUTES ---
+// Basic health check route for the root
+app.get('/', (req, res) => {
+    res.send('Daulat Resort API is running successfully!');
+});
+
 // Default /api/rooms and bookings
 app.get('/api/rooms', async (req, res) => {
     try {

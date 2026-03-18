@@ -69,7 +69,7 @@ const AdminRooms = () => {
         }
 
         try {
-            await axios.post('https://daulat-resort.onrender.com/admin/rooms', data, {
+            await axios.post('/api/admin/rooms', data, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                     Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -159,7 +159,7 @@ const AdminRooms = () => {
         }
 
         try {
-            const res = await axios.put(`https://daulat-resort.onrender.com/admin/rooms/${editRoom._id}`, data, {
+            const res = await axios.put(`/api/admin/rooms/${editRoom._id}`, data, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                     Authorization: `Bearer ${localStorage.getItem('token')}`

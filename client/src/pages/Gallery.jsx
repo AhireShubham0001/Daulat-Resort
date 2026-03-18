@@ -135,7 +135,7 @@ export default function Gallery() {
     const [lightboxIndex, setLightboxIndex] = useState(null);
 
     useEffect(() => {
-        axios.get('https://daulat-resort.onrender.com/gallery')
+        axios.get('/api/gallery')
             .then(res => {
                 setImages(res.data);
             })

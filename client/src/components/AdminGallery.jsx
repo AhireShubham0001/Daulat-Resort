@@ -38,7 +38,7 @@ const AdminGallery = () => {
         formData.append('title', title);
 
         try {
-            await axios.post('https://daulat-resort.onrender.com/admin/gallery', formData, {
+            await axios.post('/api/admin/gallery', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                     Authorization: `Bearer ${localStorage.getItem('token')}`
