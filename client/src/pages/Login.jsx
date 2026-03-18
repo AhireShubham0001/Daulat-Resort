@@ -2,6 +2,7 @@ import { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Home } from 'lucide-react';
 
 export default function Login() {
     const [formData, setFormData] = useState({ username: '', password: '' });
@@ -167,6 +168,16 @@ export default function Login() {
 
                 <div className="mt-6 text-center text-xs text-gray-400">
                     For access issues, contact system administrator.
+                </div>
+
+                <div className="mt-6 flex justify-center border-t border-gray-100 pt-6">
+                    <button 
+                        onClick={() => navigate('/')}
+                        className="flex items-center space-x-2 px-5 py-2 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-resort-gold hover:text-resort-gold transition-all duration-300 shadow-sm text-sm font-medium"
+                    >
+                        <Home size={16} />
+                        <span>Back to Website</span>
+                    </button>
                 </div>
             </motion.div>
         </div>

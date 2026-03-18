@@ -10,7 +10,8 @@ import {
     X,
     Star,
     Image,
-    Settings
+    Settings,
+    Home
 } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -30,7 +31,7 @@ export default function Admin() {
     useEffect(() => {
         fetchStats();
         fetchBookings();
-        
+
         // Get user data from localStorage
         try {
             const savedUser = localStorage.getItem('user');
@@ -112,8 +113,8 @@ export default function Admin() {
                             key={item.id}
                             onClick={() => { setActiveTab(item.id); setSidebarOpen(false); }}
                             className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors duration-200 ${activeTab === item.id
-                                    ? 'bg-resort-gold text-white shadow-md'
-                                    : 'text-gray-300 hover:bg-white/10 hover:text-white'
+                                ? 'bg-resort-gold text-white shadow-md'
+                                : 'text-gray-300 hover:bg-white/10 hover:text-white'
                                 }`}
                         >
                             {item.icon}
@@ -122,7 +123,14 @@ export default function Admin() {
                     ))}
                 </nav>
 
-                <div className="p-4 border-t border-gray-700">
+                <div className="p-4 border-t border-gray-700 flex flex-col space-y-2">
+                    <button
+                        onClick={() => navigate('/')}
+                        className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-gray-600/30 text-gray-300 hover:bg-gray-500 hover:text-white rounded-lg transition-colors duration-200"
+                    >
+                        <Home size={18} />
+                        <span>Back to Website</span>
+                    </button>
                     <button
                         onClick={handleLogout}
                         className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white rounded-lg transition-colors duration-200"
