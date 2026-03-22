@@ -437,14 +437,13 @@ const emailTransporter = nodemailer.createTransport({
     auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
 });
 
-emailTransporter.verify((error, success) => {
-    if (error) {
-        console.error("❌ CRITICAL: Email Configuration Error! Nodemailer cannot connect to Gmail:");
-        console.error(error);
-    } else {
-        console.log("✅ SUCCESS: Nodemailer Email Service connected and authorized to send messages as ->", process.env.EMAIL_USER);
-    }
-});
+console.log(`[Email Setup] Loading Gmail config for: ${process.env.EMAIL_USER || 'UNDEFINED'}`);
+emailTransporter.verify()
+    .then(() => console.log(`✅ SUCCESS: Nodemailer attached to Gmail -> ${process.env.EMAIL_USER}`))
+    .catch((error) => {
+        console.error("❌ CRITICAL: Nodemailer Failed to connect to Gmail!");
+        console.error(error.message || error);
+    });
 
 mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/daulat_resort')
     .then(() => {
