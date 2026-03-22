@@ -214,7 +214,7 @@ app.post('/api/bookings', async (req, res) => {
             }
         };
         
-        sendBookingEmail(); // Fire and forget! Doesn't block the response.
+        await sendBookingEmail(); // Must await this on Vercel or the Lambda freezes before it fires
 
         res.status(201).json(newBooking);
     } catch (err) {
@@ -293,7 +293,7 @@ app.post('/api/login', async (req, res) => {
                     }
                 };
                 
-                sendOTP(); // Fire and forget! Doesn't block the response.
+                await sendOTP(); // Must await this on Vercel Doesn't block the response.
 
                 return res.json({ twoFactor: true, message: "Verification code sent to your email." });
         }
