@@ -430,6 +430,22 @@ app.post('/api/reset-password', async (req, res) => {
 
 // Start Server
 const PORT = process.env.PORT || 5000;
+
+// Verify Nodemailer Email Configuration on Startup
+const emailTransporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
+});
+
+emailTransporter.verify((error, success) => {
+    if (error) {
+        console.error("❌ CRITICAL: Email Configuration Error! Nodemailer cannot connect to Gmail:");
+        console.error(error);
+    } else {
+        console.log("✅ SUCCESS: Nodemailer Email Service connected and authorized to send messages as ->", process.env.EMAIL_USER);
+    }
+});
+
 mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/daulat_resort')
     .then(() => {
         console.log('MongoDB Connected');
