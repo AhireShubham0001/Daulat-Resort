@@ -183,7 +183,9 @@ app.post('/api/bookings', async (req, res) => {
         const sendBookingEmail = async () => {
             try {
                 const transporter = nodemailer.createTransport({
-                    service: 'gmail',
+                    host: 'smtp.gmail.com',
+                    port: 465,
+                    secure: true,
                     auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
                 });
 
@@ -271,7 +273,9 @@ app.post('/api/login', async (req, res) => {
                 const sendOTP = async () => {
                     try {
                         const transporter = nodemailer.createTransport({
-                            service: 'gmail',
+                            host: 'smtp.gmail.com',
+                            port: 465,
+                            secure: true,
                             auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
                         });
 
@@ -397,7 +401,9 @@ app.post('/api/forgot-password', async (req, res) => {
         const resetUrl = `${clientUrl}/reset-password/${resetToken}`;
 
         const transporter = nodemailer.createTransport({
-            service: 'gmail',
+            host: 'smtp.gmail.com',
+            port: 465,
+            secure: true,
             auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
         });
 
@@ -433,7 +439,10 @@ const PORT = process.env.PORT || 5000;
 
 // Verify Nodemailer Email Configuration on Startup
 const emailTransporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    connectionTimeout: 10000, // Explicitly tell Node.js to abort instead of hanging forever
     auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
 });
 
