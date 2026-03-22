@@ -99,8 +99,8 @@ export default function Booking() {
                     <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 text-green-600">
                         <CheckCircle size={40} />
                     </div>
-                    <h2 className="text-3xl font-serif font-bold text-resort-dark mb-4">Reservation Confirmed!</h2>
-                    <p className="text-gray-600 mb-8">Thank you, {form.guestName}. Check your email ({form.email}) for details.</p>
+                    <h2 className="text-3xl font-serif font-bold text-resort-dark mb-4">Reservation In Progress</h2>
+                    <p className="text-gray-600 mb-8">Thank you, {form.guestName}. Your request is under progress. Check your email ({form.email}) for details, and our staff will call you shortly.</p>
                     <button onClick={() => window.location.href = '/'} className="bg-resort-gold text-white px-8 py-3 rounded-full hover:bg-resort-gold-dark transition font-bold shadow-lg">
                         Return Home
                     </button>
@@ -135,6 +135,15 @@ export default function Booking() {
                     transition={{ duration: 0.5 }}
                     className="bg-white p-8 md:p-10 rounded-2xl shadow-2xl relative overflow-hidden"
                 >
+                    {/* Loader Overlay */}
+                    {status === 'loading' && (
+                        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
+                            <div className="w-12 h-12 border-4 border-resort-gold border-t-transparent rounded-full animate-spin mb-4"></div>
+                            <h3 className="text-xl font-bold text-resort-dark animate-pulse">Processing...</h3>
+                            <p className="text-sm text-gray-500 mt-2">Please wait while we secure your request</p>
+                        </div>
+                    )}
+
                     <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-resort-gold via-yellow-400 to-resort-gold"></div>
                     <h2 className="text-3xl font-serif font-bold text-resort-dark mb-8 text-center">Book Your Stay</h2>
 
@@ -178,6 +187,7 @@ export default function Booking() {
                                         type="date"
                                         name="startDate"
                                         required
+                                        min={new Date().toISOString().split('T')[0]}
                                         onChange={handleChange}
                                         className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:border-resort-gold focus:ring-2 focus:ring-resort-gold/20 outline-none transition bg-gray-50 focus:bg-white text-gray-600"
                                     />
@@ -191,6 +201,7 @@ export default function Booking() {
                                         type="date"
                                         name="endDate"
                                         required
+                                        min={form.startDate || new Date().toISOString().split('T')[0]}
                                         onChange={handleChange}
                                         className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:border-resort-gold focus:ring-2 focus:ring-resort-gold/20 outline-none transition bg-gray-50 focus:bg-white text-gray-600"
                                     />

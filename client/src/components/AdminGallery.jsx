@@ -116,8 +116,13 @@ const AdminGallery = () => {
                             className="relative group rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition bg-gray-100"
                         >
                             <img src={img.imageUrl} alt={img.title} className="w-full h-40 object-cover" />
-                            <div className="absolute inset-x-0 bottom-0 bg-black/60 text-white text-xs p-2 truncate">
-                                {img.title}
+                            <div className="absolute inset-x-0 bottom-0 bg-black/70 text-white text-xs p-2 flex flex-col">
+                                <span className="font-bold truncate">{img.title}</span>
+                                {img.lastModifiedBy && (
+                                    <span className="text-[10px] text-gray-300 mt-0.5 truncate">
+                                        By {img.lastModifiedBy.username || 'Admin'} on {new Date(img.updatedAt).toLocaleDateString()}
+                                    </span>
+                                )}
                             </div>
                             <button
                                 onClick={() => handleDelete(img._id)}

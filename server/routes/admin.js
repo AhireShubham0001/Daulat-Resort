@@ -5,6 +5,7 @@ import { uploadFile, deleteFile } from '../utils/cloudinary.js';
 import multer from 'multer';
 import Gallery from '../models/Gallery.js';
 import mongoose from 'mongoose';
+import { authorizeRoles, authorizePermission } from '../utils/authMiddleware.js';
 
 const router = express.Router();
 const storage = multer.memoryStorage();
@@ -34,7 +35,7 @@ const FOLDER_USERS   = 'daulat_resort/users';
 // --- ROOM MANAGEMENT (With Image Upload) ---
 
 // ADD New Room
-router.post('/rooms', upload.array('images', 5), async (req, res) => {
+router.post('/rooms', authorizePermission('rooms', 'add'), upload.array('images', 5), async (req, res) => {
     try {
         const Room = getRoomModel();
 
@@ -59,7 +60,9 @@ router.post('/rooms', upload.array('images', 5), async (req, res) => {
             price: req.body.price,
             description: req.body.description,
             capacity: req.body.capacity,
-            images: imageUrls
+            images: imageUrls,
+            createdBy: req.user.id,
+            lastModifiedBy: req.user.id
         };
 
         if (req.body.amenities) {
@@ -83,12 +86,12 @@ router.post('/rooms', upload.array('images', 5), async (req, res) => {
 });
 
 // EDIT Room
-router.put('/rooms/:id', upload.array('images', 5), async (req, res) => {
+router.put('/rooms/:id', authorizePermission('rooms', 'edit'), upload.array('images', 5), async (req, res) => {
     try {
         const Room = getRoomModel();
 
         // Build the update object from text fields
-        const updateData = {};
+        const updateData = { lastModifiedBy: req.user.id };
         if (req.body.name)        updateData.name        = req.body.name;
         if (req.body.price)       updateData.price       = req.body.price;
         if (req.body.description) updateData.description = req.body.description;
@@ -138,7 +141,7 @@ router.put('/rooms/:id', upload.array('images', 5), async (req, res) => {
 });
 
 // DELETE Room
-router.delete('/rooms/:id', async (req, res) => {
+router.delete('/rooms/:id', authorizePermission('rooms', 'delete'), async (req, res) => {
     try {
         const Room = getRoomModel();
         await Room.findByIdAndDelete(req.params.id);
@@ -149,16 +152,16 @@ router.delete('/rooms/:id', async (req, res) => {
 });
 
 // --- GALLERY MANAGEMENT ---
-router.get('/gallery', async (req, res) => {
+router.get('/gallery', authorizePermission('gallery', 'view'), async (req, res) => {
     try {
-        const galleries = await Gallery.find();
+        const galleries = await Gallery.find().populate('lastModifiedBy', 'username').sort({ createdAt: -1 });
         res.json(galleries);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 });
 
-router.post('/gallery', upload.single('image'), async (req, res) => {
+router.post('/gallery', authorizePermission('gallery', 'add'), upload.single('image'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ message: "No image uploaded" });
         const uploadRes = await uploadFile(req.file, FOLDER_GALLERY);
@@ -167,6 +170,8 @@ router.post('/gallery', upload.single('image'), async (req, res) => {
             title: req.body.title || req.file.originalname,
             category: req.body.category || 'General',
             cloudId: uploadRes.id,
+            createdBy: req.user.id,
+            lastModifiedBy: req.user.id
         });
         await newImage.save();
         res.status(201).json(newImage);
@@ -176,7 +181,7 @@ router.post('/gallery', upload.single('image'), async (req, res) => {
     }
 });
 
-router.delete('/gallery/:id', async (req, res) => {
+router.delete('/gallery/:id', authorizePermission('gallery', 'delete'), async (req, res) => {
     try {
         const image = await Gallery.findById(req.params.id);
         if (!image) return res.status(404).json({ message: "Image not found" });
@@ -191,28 +196,69 @@ router.delete('/gallery/:id', async (req, res) => {
 });
 
 // --- BOOKING MANAGEMENT ---
-router.get('/bookings', async (req, res) => {
+router.get('/bookings', authorizePermission('bookings', 'view'), async (req, res) => {
     try {
         const Booking = getBookingModel();
-        const bookings = await Booking.find().populate('roomId').sort({ createdAt: -1 });
+        const bookings = await Booking.find().populate('roomId').populate('lastModifiedBy', 'username').sort({ createdAt: -1 });
         res.json(bookings);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 });
 
-router.put('/bookings/:id', async (req, res) => {
+router.put('/bookings/:id', authorizePermission('bookings', 'edit'), async (req, res) => {
     try {
         const Booking = getBookingModel();
         const { status, verificationStatus } = req.body;
-        const updateData = {};
+        const updateData = { lastModifiedBy: req.user.id };
         if (status) updateData.status = status;
-        if (verificationStatus) updateData.verificationStatus = verificationStatus;
+        if (verificationStatus) {
+            updateData.verificationStatus = verificationStatus;
+            // Also automatically change the general status to Confirmed when verification finishes
+            if (verificationStatus === 'Verified') {
+                updateData.status = 'Confirmed';
+            }
+        }
+        
         const updatedBooking = await Booking.findByIdAndUpdate(
             req.params.id,
             { $set: updateData },
             { new: true }
         ).populate('roomId');
+
+        // Send Email Notification if status is "Verified" (Reservation Confirmed)
+        if (verificationStatus === 'Verified') {
+            try {
+                const transporter = nodemailer.createTransport({
+                    service: 'gmail',
+                    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
+                });
+
+                await transporter.sendMail({
+                    from: process.env.EMAIL_USER,
+                    to: updatedBooking.email,
+                    subject: 'Daulat Resort - Reservation Confirmed',
+                    html: `
+                        <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
+                            <h2 style="color: #c5a059; text-align: center;">Reservation Confirmed!</h2>
+                            <p>Dear <strong>${updatedBooking.guestName}</strong>,</p>
+                            <p>Great news! Your booking verification is complete and your reservation has been <strong>fully confirmed</strong>.</p>
+                            <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                                <p style="margin: 0;"><strong>Room:</strong> ${updatedBooking.roomId?.name || 'N/A'}</p>
+                                <p style="margin: 5px 0 0;"><strong>Dates:</strong> ${new Date(updatedBooking.startDate).toLocaleDateString()} - ${new Date(updatedBooking.endDate).toLocaleDateString()}</p>
+                            </div>
+                            <p>We look forward to hosting you at Daulat Resort.</p>
+                            <p style="text-align: center; color: #777; font-size: 12px; margin-top: 30px;">
+                                Daulat Resort - Creating Unforgettable Memories
+                            </p>
+                        </div>
+                    `
+                });
+                console.log(`Confirmation email sent to: ${updatedBooking.email}`);
+            } catch (emailErr) {
+                console.error("Confirmation Email Error:", emailErr);
+            }
+        }
 
         // Send Email Notification if status is "Completed"
         if (verificationStatus === 'Completed') {
@@ -309,10 +355,10 @@ router.get('/stats', async (req, res) => {
 // --- USER MANAGEMENT ---
 
 // GET All Users
-router.get('/users', async (req, res) => {
+router.get('/users', authorizePermission('users', 'manage'), async (req, res) => {
     try {
         const User = getUserModel();
-        const users = await User.find().select('-password');
+        const users = await User.find().populate('lastModifiedBy', 'username').select('-password');
         res.json(users);
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -320,7 +366,7 @@ router.get('/users', async (req, res) => {
 });
 
 // ADD New User
-router.post('/users', upload.single('profileImage'), async (req, res) => {
+router.post('/users', authorizePermission('users', 'manage'), upload.single('profileImage'), async (req, res) => {
     try {
         const User = getUserModel();
         const { username, password, email, contactNumber, role } = req.body;
@@ -337,6 +383,15 @@ router.post('/users', upload.single('profileImage'), async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        let customPermissions = undefined;
+        if (req.body.customPermissions) {
+            try {
+                customPermissions = JSON.parse(req.body.customPermissions);
+            } catch(e) {
+                console.error("Failed to parse customPermissions", e);
+            }
+        }
+
         const newUser = new User({
             username,
             password: hashedPassword,
@@ -344,7 +399,10 @@ router.post('/users', upload.single('profileImage'), async (req, res) => {
             contactNumber,
             role,
             profileImage,
-            isTwoFactorEnabled: req.body.isTwoFactorEnabled === 'true' || req.body.isTwoFactorEnabled === true
+            customPermissions,
+            isTwoFactorEnabled: req.body.isTwoFactorEnabled === 'true' || req.body.isTwoFactorEnabled === true,
+            createdBy: req.user.id,
+            lastModifiedBy: req.user.id
         });
 
         await newUser.save();
@@ -359,7 +417,7 @@ router.post('/users', upload.single('profileImage'), async (req, res) => {
 });
 
 // UPDATE User (including password/photo)
-router.put('/users/:id', upload.single('profileImage'), async (req, res) => {
+router.put('/users/:id', authorizePermission('users', 'manage'), upload.single('profileImage'), async (req, res) => {
     try {
         const User = getUserModel();
         const { username, password, email, contactNumber, role, isTwoFactorEnabled } = req.body;
@@ -372,8 +430,17 @@ router.put('/users/:id', upload.single('profileImage'), async (req, res) => {
             email, 
             contactNumber, 
             role,
-            isTwoFactorEnabled: isTwoFactorEnabled === 'true' || isTwoFactorEnabled === true
+            isTwoFactorEnabled: isTwoFactorEnabled === 'true' || isTwoFactorEnabled === true,
+            lastModifiedBy: req.user.id
         };
+
+        if (req.body.customPermissions) {
+            try {
+                updateData.customPermissions = JSON.parse(req.body.customPermissions);
+            } catch(e) {
+                 console.error("Failed to parse customPermissions", e);
+            }
+        }
 
         if (password && password.trim() !== "") {
             updateData.password = await bcrypt.hash(password, 10);
@@ -399,7 +466,7 @@ router.put('/users/:id', upload.single('profileImage'), async (req, res) => {
 });
 
 // DELETE User
-router.delete('/users/:id', async (req, res) => {
+router.delete('/users/:id', authorizePermission('users', 'manage'), async (req, res) => {
     try {
         const User = getUserModel();
         await User.findByIdAndDelete(req.params.id);

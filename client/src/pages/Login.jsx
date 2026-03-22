@@ -71,8 +71,17 @@ export default function Login() {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="w-full max-w-md bg-white p-8 rounded-2xl shadow-xl"
+                className="w-full max-w-md bg-white p-8 rounded-2xl shadow-xl relative overflow-hidden"
             >
+                {/* Loader Overlay */}
+                {loading && (
+                    <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
+                        <div className="w-12 h-12 border-4 border-resort-gold border-t-transparent rounded-full animate-spin mb-4"></div>
+                        <h3 className="text-xl font-bold text-resort-dark animate-pulse">{showOtp ? 'Verifying...' : 'Signing In...'}</h3>
+                        <p className="text-sm text-gray-500 mt-2">Please wait</p>
+                    </div>
+                )}
+
                 <div className="text-center mb-8">
                     <h1 className="text-3xl font-serif font-bold text-resort-dark">Admin Login</h1>
                     <p className="text-gray-500 text-sm mt-2">Daulat Resort Management Panel</p>

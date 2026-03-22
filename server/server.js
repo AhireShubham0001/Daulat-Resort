@@ -48,8 +48,10 @@ const RoomSchema = new mongoose.Schema({
     amenities: [String],
     threeDModel: String,
     occupancy: Number,  // kept for backward compat with old records
-    capacity: Number    // used by the admin form
-});
+    capacity: Number,   // used by the admin form
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    lastModifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+}, { timestamps: true });
 const Room = mongoose.models.Room || mongoose.model('Room', RoomSchema);
 
 const BookingSchema = new mongoose.Schema({
@@ -70,7 +72,8 @@ const BookingSchema = new mongoose.Schema({
         default: 'Waiting'
     },
     staffNotes: String,
-    verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+    verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    lastModifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
 const Booking = mongoose.models.Booking || mongoose.model('Booking', BookingSchema);
 
@@ -91,7 +94,16 @@ const UserSchema = new mongoose.Schema({
     trustedDevices: [{ 
         deviceId: { type: String },
         expiresAt: { type: Date }
-    }]
+    }],
+    customPermissions: {
+        bookings: { view: { type: Boolean, default: false }, edit: { type: Boolean, default: false }, verify: { type: Boolean, default: false }, delete: { type: Boolean, default: false } },
+        rooms: { view: { type: Boolean, default: false }, add: { type: Boolean, default: false }, edit: { type: Boolean, default: false }, delete: { type: Boolean, default: false } },
+        gallery: { view: { type: Boolean, default: false }, add: { type: Boolean, default: false }, delete: { type: Boolean, default: false } },
+        users: { manage: { type: Boolean, default: false } },
+        settings: { view: { type: Boolean, default: false }, edit: { type: Boolean, default: false } }
+    },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    lastModifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
 const User = mongoose.models.User || mongoose.model('User', UserSchema);
 
@@ -107,7 +119,7 @@ app.get('/', (req, res) => {
 // Default /api/rooms and bookings
 app.get('/api/rooms', async (req, res) => {
     try {
-        const rooms = await Room.find();
+        const rooms = await Room.find().populate('lastModifiedBy', 'username');
         res.json(rooms);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -162,7 +174,7 @@ app.post('/api/bookings', async (req, res) => {
             startDate,
             endDate,
             totalPrice,
-            status: 'Confirmed' // Default to confirmed for now
+            status: 'Pending' // Reservation is under progress, needs verification
         });
 
         await newBooking.save();
@@ -178,18 +190,18 @@ app.post('/api/bookings', async (req, res) => {
                 await transporter.sendMail({
                     from: process.env.EMAIL_USER,
                     to: email,
-                    subject: 'Daulat Resort - Reservation Confirmed',
+                    subject: 'Daulat Resort - Reservation In Progress',
                     html: `
                         <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
-                            <h2 style="color: #c5a059; text-align: center;">Reservation Confirmed!</h2>
+                            <h2 style="color: #c5a059; text-align: center;">Reservation In Progress</h2>
                             <p>Dear <strong>${guestName}</strong>,</p>
-                            <p>Thank you for choosing Daulat Resort. Your reservation has been successfully confirmed.</p>
+                            <p>Thank you for choosing Daulat Resort. Your reservation request has been successfully received and is currently under progress.</p>
                             <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
                                 <p style="margin: 0;"><strong>Room:</strong> ${room.name}</p>
                                 <p style="margin: 5px 0 0;"><strong>Dates:</strong> ${new Date(startDate).toLocaleDateString()} - ${new Date(endDate).toLocaleDateString()}</p>
                                 <p style="margin: 5px 0 0;"><strong>Total Price:</strong> ₹${totalPrice}</p>
                             </div>
-                            <p>Our staff will contact you shortly to verify your details.</p>
+                            <p>Our staff will call you shortly to verify your details and complete the booking process.</p>
                             <p style="text-align: center; color: #777; font-size: 12px; margin-top: 30px;">
                                 Daulat Resort - Looking Forward to Your Visit
                             </p>
@@ -299,7 +311,8 @@ app.post('/api/login', async (req, res) => {
             user: { 
                 username: user.username, 
                 role: user.role,
-                profileImage: user.profileImage 
+                profileImage: user.profileImage,
+                customPermissions: user.customPermissions
             } 
         });
 
@@ -341,7 +354,8 @@ app.post('/api/verify-otp', async (req, res) => {
             user: { 
                 username: user.username, 
                 role: user.role,
-                profileImage: user.profileImage 
+                profileImage: user.profileImage,
+                customPermissions: user.customPermissions
             } 
         });
 

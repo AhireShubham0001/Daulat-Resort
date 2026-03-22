@@ -76,14 +76,21 @@ export default function Admin() {
         navigate('/login');
     };
 
-    const menuItems = [
-        { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
-        { id: 'bookings', label: 'Bookings', icon: <CalendarCheck size={20} /> },
-        { id: 'rooms', label: 'Manage Rooms', icon: <BedDouble size={20} /> },
-        { id: 'gallery', label: 'Gallery', icon: <Image size={20} /> },
-        { id: 'users', label: 'Users', icon: <Users size={20} /> },
-        { id: 'settings', label: 'Settings', icon: <Settings size={20} /> },
-    ];
+    const getMenuItems = () => {
+        if (!user) return [{ id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> }];
+
+        const allItems = [
+            { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} />, active: true },
+            { id: 'bookings', label: 'Bookings', icon: <CalendarCheck size={20} />, active: user.role === 'Owner' || user.customPermissions?.bookings?.view },
+            { id: 'rooms', label: 'Manage Rooms', icon: <BedDouble size={20} />, active: user.role === 'Owner' || user.customPermissions?.rooms?.view },
+            { id: 'gallery', label: 'Gallery', icon: <Image size={20} />, active: user.role === 'Owner' || user.customPermissions?.gallery?.view },
+            { id: 'users', label: 'Staff & Roles', icon: <Users size={20} />, active: user.role === 'Owner' || user.customPermissions?.users?.manage },
+            { id: 'settings', label: 'Settings', icon: <Settings size={20} />, active: user.role === 'Owner' || user.customPermissions?.settings?.view },
+        ];
+        return allItems.filter(item => item.active);
+    };
+
+    const menuItems = getMenuItems();
 
     return (
         <div className="flex h-screen bg-gray-100 font-sans">

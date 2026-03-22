@@ -254,6 +254,11 @@ const AdminRooms = () => {
                                         <span key={i} className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-600">{am}</span>
                                     ))}
                                 </div>
+                                {room.lastModifiedBy && (
+                                    <p className="text-xs text-gray-400 mt-3 pt-3 border-t border-gray-100 border-dashed">
+                                        Last modified by <span className="font-semibold text-gray-500">{room.lastModifiedBy.username || 'Admin'}</span> on {new Date(room.updatedAt).toLocaleString()}
+                                    </p>
+                                )}
                             </div>
 
                             {/* Action Buttons */}

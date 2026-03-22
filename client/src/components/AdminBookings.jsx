@@ -10,16 +10,19 @@ import {
     MessageSquare,
     ChevronRight,
     Search,
-    Filter
+    Filter,
+    LayoutList
 } from 'lucide-react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
+import AdminCalendarView from './AdminCalendarView';
 
 export default function AdminBookings() {
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
+    const [viewMode, setViewMode] = useState('list');
 
     useEffect(() => {
         fetchBookings();
@@ -117,9 +120,27 @@ export default function AdminBookings() {
                         className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-resort-gold/20 transition"
                     />
                 </div>
+
+                <div className="flex bg-gray-100 p-1 rounded-lg shrink-0">
+                    <button 
+                        onClick={() => setViewMode('list')} 
+                        className={`p-2 rounded-md flex items-center gap-2 text-sm font-medium transition-colors ${viewMode === 'list' ? 'bg-white shadow text-resort-dark pointer-events-none' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
+                        <LayoutList size={16} /> List
+                    </button>
+                    <button 
+                        onClick={() => setViewMode('calendar')} 
+                        className={`p-2 rounded-md flex items-center gap-2 text-sm font-medium transition-colors ${viewMode === 'calendar' ? 'bg-white shadow text-resort-dark pointer-events-none' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
+                        <Calendar size={16} /> Calendar
+                    </button>
+                </div>
             </div>
 
-            {/* Bookings List */}
+            {/* Content Area */}
+            {viewMode === 'calendar' ? (
+                <AdminCalendarView bookings={filteredBookings} />
+            ) : (
             <div className="grid grid-cols-1 gap-4">
                 {filteredBookings.map((booking) => (
                     <motion.div 
@@ -150,6 +171,11 @@ export default function AdminBookings() {
                                             {booking.verificationStatus}
                                         </span>
                                     </div>
+                                    {booking.lastModifiedBy && (
+                                        <p className="text-[11px] text-gray-400 mt-2 font-normal">
+                                            Modified by <span className="font-semibold text-gray-500">{booking.lastModifiedBy.username || 'Admin'}</span> on {new Date(booking.updatedAt).toLocaleString()}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
 
@@ -216,6 +242,7 @@ export default function AdminBookings() {
                     </div>
                 )}
             </div>
+            )}
         </div>
     );
 }

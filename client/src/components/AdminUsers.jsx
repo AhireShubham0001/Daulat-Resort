@@ -34,6 +34,15 @@ export default function AdminUsers() {
     });
     const [previewImage, setPreviewImage] = useState(null);
 
+    const defaultPermissions = {
+        bookings: { view: false, edit: false, verify: false, delete: false },
+        rooms: { view: false, add: false, edit: false, delete: false },
+        gallery: { view: false, add: false, delete: false },
+        users: { manage: false },
+        settings: { view: false, edit: false }
+    };
+    const [customPermissions, setCustomPermissions] = useState(defaultPermissions);
+
     useEffect(() => {
         fetchUsers();
     }, []);
@@ -64,6 +73,7 @@ export default function AdminUsers() {
                 isTwoFactorEnabled: user.isTwoFactorEnabled || false
             });
             setPreviewImage(user.profileImage);
+            setCustomPermissions(user.customPermissions || defaultPermissions);
         } else {
             setEditingUser(null);
             setFormData({
@@ -76,6 +86,7 @@ export default function AdminUsers() {
                 isTwoFactorEnabled: false
             });
             setPreviewImage(null);
+            setCustomPermissions(defaultPermissions);
         }
         setModalOpen(true);
     };
@@ -97,6 +108,8 @@ export default function AdminUsers() {
                 data.append(key, formData[key]);
             }
         });
+        // Append custom permissions stringified
+        data.append('customPermissions', JSON.stringify(customPermissions));
 
         try {
             if (editingUser) {
@@ -224,6 +237,11 @@ export default function AdminUsers() {
                                         <Phone size={16} className="mr-3 text-gray-400" />
                                         <span>{user.contactNumber || 'No contact provided'}</span>
                                     </div>
+                                    {user.lastModifiedBy && (
+                                        <div className="pt-3 mt-3 border-t border-gray-100 flex items-center text-[11px] text-gray-400">
+                                            <span>Modified by <strong className="text-gray-500">{user.lastModifiedBy.username || 'Admin'}</strong> on {new Date(user.updatedAt).toLocaleDateString()}</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </motion.div>
@@ -367,6 +385,57 @@ export default function AdminUsers() {
                                             />
                                         </button>
                                     </div>
+
+                                    {/* Advanced Custom Permissions Manager */}
+                                    {formData.role !== 'Owner' && (
+                                        <div className="md:col-span-2 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                                            <div className="flex justify-between items-center mb-3 border-b pb-2">
+                                                <h3 className="text-sm font-bold text-gray-700">Granular Module Permissions</h3>
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => {
+                                                        const full = {...customPermissions};
+                                                        Object.keys(full).forEach(m => Object.keys(full[m]).forEach(a => full[m][a] = true));
+                                                        setCustomPermissions({...full});
+                                                    }}
+                                                    className="text-xs font-bold text-resort-gold hover:text-yellow-600 bg-white border border-gray-200 px-3 py-1 rounded shadow-sm transition"
+                                                >
+                                                    Grant Full Access
+                                                </button>
+                                            </div>
+                                            <p className="text-[11px] text-gray-500 mb-4 font-medium uppercase tracking-wider">Customize read/write access for this specific user. Owner overrides this entirely.</p>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {Object.keys(customPermissions).map(module => (
+                                                    <div key={module} className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm relative overflow-hidden group hover:border-resort-gold/30 transition">
+                                                        <div className="absolute top-0 left-0 w-1 h-full bg-gray-200 group-hover:bg-resort-gold transition"></div>
+                                                        <h4 className="text-xs font-bold uppercase tracking-wider text-resort-dark mb-2 ml-2">{module}</h4>
+                                                        <div className="flex flex-wrap gap-2 ml-2">
+                                                            {Object.keys(customPermissions[module]).map(action => (
+                                                                <label key={action} className={`flex items-center space-x-1.5 cursor-pointer px-2 py-1 rounded border transition ${customPermissions[module][action] ? 'bg-resort-gold/10 border-resort-gold/30 text-resort-gold' : 'bg-gray-50 border-gray-100 text-gray-500 hover:bg-gray-100'}`}>
+                                                                    <input 
+                                                                        type="checkbox"
+                                                                        checked={customPermissions[module][action] === true}
+                                                                        onChange={(e) => {
+                                                                            const val = e.target.checked;
+                                                                            setCustomPermissions(prev => ({
+                                                                                ...prev,
+                                                                                [module]: {
+                                                                                    ...prev[module],
+                                                                                    [action]: val
+                                                                                }
+                                                                            }));
+                                                                        }}
+                                                                        className="w-3 h-3 text-resort-gold rounded border-gray-300 focus:ring-resort-gold bg-white"
+                                                                    />
+                                                                    <span className="text-[10px] font-bold uppercase tracking-wider">{action}</span>
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="pt-4 flex space-x-4">
