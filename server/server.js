@@ -20,7 +20,7 @@ const __dirname = path.dirname(__filename);
 
 // Middleware
 const allowedOrigins = [
-    'http://localhost:5173', 
+    'http://localhost:5173',
     'https://daulat-resort.vercel.app',
     process.env.CLIENT_URL // In case you want to set it manually in Render later
 ].filter(Boolean);
@@ -61,10 +61,10 @@ const BookingSchema = new mongoose.Schema({
     startDate: Date,
     endDate: Date,
     totalPrice: Number,
-    status: { 
-        type: String, 
+    status: {
+        type: String,
         enum: ['Pending', 'Confirmed', 'Cancelled'],
-        default: 'Pending' 
+        default: 'Pending'
     },
     verificationStatus: {
         type: String,
@@ -83,15 +83,15 @@ const UserSchema = new mongoose.Schema({
     email: { type: String },
     contactNumber: { type: String },
     profileImage: { type: String },
-    role: { 
-        type: String, 
+    role: {
+        type: String,
         enum: ['Owner', 'Manager', 'Receptionist', 'Accountant', 'Staff'],
-        default: 'Staff' 
+        default: 'Staff'
     },
     otp: { type: String },
     otpExpires: { type: Date },
     isTwoFactorEnabled: { type: Boolean, default: false },
-    trustedDevices: [{ 
+    trustedDevices: [{
         deviceId: { type: String },
         expiresAt: { type: Date }
     }],
@@ -150,7 +150,7 @@ app.get('/api/bookings', async (req, res) => {
 app.post('/api/bookings', async (req, res) => {
     try {
         const { roomId, guestName, email, startDate, endDate } = req.body;
-        
+
         // Basic validation
         if (!roomId || !startDate || !endDate) {
             return res.status(400).json({ message: "Required fields are missing" });
@@ -213,8 +213,8 @@ app.post('/api/bookings', async (req, res) => {
                 console.error("Confirmation Email Error:", emailErr);
             }
         };
-        
-        await sendBookingEmail(); // Must await this on Vercel or the Lambda freezes before it fires
+
+        sendBookingEmail(); // Must await this on Vercel or the Lambda freezes before it fires
 
         res.status(201).json(newBooking);
     } catch (err) {
@@ -240,7 +240,7 @@ app.post('/api/login', async (req, res) => {
     try {
         const { username, password } = req.body;
         console.log(`Login attempt for: ${username}`);
-        
+
         const user = await User.findOne({ username });
 
         if (!user) {
@@ -292,12 +292,12 @@ app.post('/api/login', async (req, res) => {
                         console.error("OTP Email Error:", err);
                     }
                 };
-                
-                await sendOTP(); // Must await this on Vercel Doesn't block the response.
+
+                sendOTP(); // Fire and forget! Doesn't block the response.
 
                 return res.json({ twoFactor: true, message: "Verification code sent to your email." });
+            }
         }
-    }
 
         // For non-admin roles, login directly
         const token = jwt.sign(
@@ -306,14 +306,14 @@ app.post('/api/login', async (req, res) => {
             { expiresIn: '1h' }
         );
 
-        res.json({ 
-            token, 
-            user: { 
-                username: user.username, 
+        res.json({
+            token,
+            user: {
+                username: user.username,
                 role: user.role,
                 profileImage: user.profileImage,
                 customPermissions: user.customPermissions
-            } 
+            }
         });
 
     } catch (err) {
@@ -333,7 +333,7 @@ app.post('/api/verify-otp', async (req, res) => {
 
         // Clear OTP after successful verification
         const updateData = { otp: null, otpExpires: null };
-        
+
         // Handle "Trust this device"
         const { deviceId, trustDevice } = req.body;
         if (trustDevice && deviceId) {
@@ -349,14 +349,14 @@ app.post('/api/verify-otp', async (req, res) => {
             { expiresIn: '2h' }
         );
 
-        res.json({ 
-            token, 
-            user: { 
-                username: user.username, 
+        res.json({
+            token,
+            user: {
+                username: user.username,
                 role: user.role,
                 profileImage: user.profileImage,
                 customPermissions: user.customPermissions
-            } 
+            }
         });
 
     } catch (err) {
@@ -379,9 +379,9 @@ app.post('/api/forgot-password', async (req, res) => {
         let user;
         if (users.length > 1) {
             if (!username) {
-                return res.status(400).json({ 
-                    needUsername: true, 
-                    message: "Multiple accounts found with this email. Please provide your username." 
+                return res.status(400).json({
+                    needUsername: true,
+                    message: "Multiple accounts found with this email. Please provide your username."
                 });
             }
             user = users.find(u => u.username === username);
